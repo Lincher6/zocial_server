@@ -7,6 +7,7 @@ exports.authMiddleware = async (req, res, next) => {
             req.user = await admin.auth().verifyIdToken(idToken)
             const data = await db.collection('users').where('userId', '==', req.user.uid).limit(1).get()
             req.user.handle = data.docs[0].data().handle
+            req.user.imageUrl = data.docs[0].data().imageUrl
             return next()
         } else {
             return res.status(403).json({error: `No authorized`})

@@ -38,5 +38,21 @@ const validateLogin = (data) => {
     }
 }
 
-module.exports = {validateSighUp, validateLogin}
+const reduceUserDetails = (data) => {
+    const userDetails = {}
+
+    if (!isEmpty(data.bio)) userDetails.bio = data.bio
+    if (!isEmpty(data.website)) {
+        if (data.website.startsWith('http')) {
+            userDetails.website = data.website
+        } else {
+            userDetails.website = `http://${data.website}`
+        }
+    }
+    if (!isEmpty(data.location)) userDetails.location = data.location
+
+    return userDetails
+}
+
+module.exports = {validateSighUp, validateLogin, reduceUserDetails}
 
