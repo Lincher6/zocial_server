@@ -2,18 +2,27 @@ const { db } = require('../utils/admin')
 
 exports.getAllBites = async (req, res) => {
     try {
-        const response = await db
+        let collection = db
             .collection('bites')
-            .orderBy('createdAt', 'desc')
+        if (req.query['userHandle']) {
+            collection = collection.where('userHandle', '==', req.query['userHandle'])
+        }
+        const data = await collection
+            .orderBy('createdAt', req.query['biteFilter'])
+            .offset(parseInt(req.query['offset']))
+            .limit(10)
             .get()
+
         const bites = []
-        response.docs.map((doc) => {
+        data.docs.map((doc) => {
             bites.push({
                 biteId: doc.id,
                 body: doc.data().body,
                 userHandle: doc.data().userHandle,
                 createdAt: doc.data().createdAt,
                 imageUrl: doc.data().imageUrl,
+                likesCount: doc.data().likesCount,
+                commentsCount: doc.data().commentsCount,
             })
         })
 
@@ -80,7 +89,7 @@ exports.addBite = async (req, res) => {
         }
         const response = await db.collection('bites').add(newBite)
         newBite.biteId = response.id
-        res.json(newBite)
+        res.status(201).json(newBite)
     } catch (e) {
         res.status(500).json({error: `something went wrong: ${e}`})
     }

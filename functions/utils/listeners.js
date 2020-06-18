@@ -48,6 +48,7 @@ exports.onUserImageChange = functions
         try {
             if (change.before.data().imageUrl !== change.after.data().imageUrl) {
                 const batch = db.batch()
+
                 const bitesData = await db
                     .collection('bites')
                     .where('userHandle', '==', change.after.data().handle)
@@ -56,6 +57,16 @@ exports.onUserImageChange = functions
                     const biteData = db.doc(`/bites/${doc.id}`)
                     batch.update(biteData, { imageUrl: change.after.data().imageUrl })
                 })
+
+                const commentsData = await db
+                    .collection('comments')
+                    .where('userHandle', '==', change.after.data().handle)
+                    .get()
+                commentsData.forEach( doc => {
+                    const commentData = db.doc(`/comments/${doc.id}`)
+                    batch.update(commentData, { userImage: change.after.data().imageUrl })
+                })
+
                 return await batch.commit()
             }
         } catch (e) {

@@ -10,46 +10,39 @@ const isEmail = (email) => {
 }
 
 const validateSighUp = (data) => {
-    const errors = {}
-
-    if (isEmpty(data.email)) errors.email = 'Must not be empty'
-    else if (!isEmail(data.email)) errors.email = 'Email is not valid'
-
-    if (isEmpty(data.password)) errors.password = 'Must not be empty'
-    if (data.password !== data.confirmPassword) errors.confirmPassword = 'Passwords must match'
-
-    if (isEmpty(data.handle)) errors.handle = 'Must not be empty'
-
-    return {
-        errors,
-        isValid: Object.keys(errors).length === 0
-    }
+    if (isEmpty(data.email)) return 'Email не должен быть пустым'
+    else if (!isEmail(data.email)) return 'Некорректный Email'
+    else if (isEmpty(data.password)) return 'Пароль не должен быть пустым'
+    else if (data.password !== data.confirmPassword) return 'Пароли не совпадают'
+    else if (isEmpty(data.handle)) return 'Имя пользователя не должно быть пустым'
+    else if (data.handle.length > 20) return 'Имя пользователя слишком длинное'
 }
 
 const validateLogin = (data) => {
-    const errors = {}
-
-    if (isEmpty(data.email)) errors.email = 'Must not be empty'
-    if (isEmpty(data.password)) errors.password = 'Must not be empty'
-
-    return {
-        errors,
-        isValid: Object.keys(errors).length === 0
-    }
+    if (isEmpty(data.email)) return 'Email не должен быть пустым'
+    else if (isEmpty(data.password)) return 'Пароль не должен быть пустым'
+    return null
 }
 
 const reduceUserDetails = (data) => {
     const userDetails = {}
 
-    if (!isEmpty(data.bio)) userDetails.bio = data.bio
+    if (isEmpty(data.bio)) userDetails.bio = ''
+    else userDetails.bio = data.bio
+
+    if (isEmpty(data.location)) userDetails.location = ''
+    else userDetails.location = data.location
+
     if (!isEmpty(data.website)) {
         if (data.website.startsWith('http')) {
             userDetails.website = data.website
         } else {
             userDetails.website = `http://${data.website}`
         }
+        return userDetails
+    } else {
+        userDetails.website = ''
     }
-    if (!isEmpty(data.location)) userDetails.location = data.location
 
     return userDetails
 }

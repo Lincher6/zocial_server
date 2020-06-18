@@ -3,10 +3,12 @@ const { generateNotification, deleteNotification, onUserImageChange, onBiteDelet
 const express = require('express')
 const { getAllBites, getBite, deleteBite, addBite, commentBite, likeBite, unLikeBite} = require('./handlers/bites')
 const { signUp, login } = require('./handlers/auth')
-const { uploadImage, addUserDetails, getAuthUserDetails, getUserDetails, markReadNotifications } = require('./handlers/users')
+const { uploadImage, addUserDetails, getAuthUserDetails, getUserDetails, markReadNotifications, getUsers, follow } = require('./handlers/users')
 const { authMiddleware } = require('./utils/authMiddleware')
 
+const cors = require('cors')
 const app = express()
+app.use(cors())
 
 //bites
 app.get('/bites', getAllBites)
@@ -25,8 +27,10 @@ app.post('/login', login)
 app.post('/user', authMiddleware, addUserDetails )
 app.get('/user', authMiddleware, getAuthUserDetails )
 app.get('/user/:handle',  getUserDetails )
+app.post('/users', getUsers )
 app.post('/user/image', authMiddleware, uploadImage )
 app.post('/notifications', authMiddleware, markReadNotifications )
+app.post('/user/:handle/follow', authMiddleware, follow )
 
 exports.api = functions.region('europe-west2').https.onRequest(app)
 

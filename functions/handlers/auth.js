@@ -11,26 +11,29 @@ exports.signUp = async (req, res) => {
             handle: req.body.handle,
         }
 
-        const  { errors, isValid} = validateSighUp(newUser)
+        const  error = validateSighUp(newUser)
 
-        if (!isValid) {
-            return res.status(400).json({errors})
+        if (error) {
+            return res.status(400).json({error})
         }
-
-        const noImg = 'empty-avatar.png'
 
         const doc = await db.doc(`/users/${newUser.handle}`).get()
         if (doc.exists) {
-            return res.status(400).json({message: `userName already exists`})
+            return res.status(400).json({error: `Имя пользователя уже существует`})
         }
 
         const data = await firebase.auth().createUserWithEmailAndPassword(newUser.email, newUser.password)
         const userCredentials = {
             handle: newUser.handle,
             email: newUser.email,
-            imageUrl: `https://firebasestorage.googleapis.com/v0/b/${config.storageBucket}/o/${noImg}?alt=media`,
+            imageUrl: `https://firebasestorage.googleapis.com/v0/b/${config.storageBucket}/o/no-avatar.png?alt=media`,
             createdAt: new Date().toISOString(),
-            userId: data.user.uid
+            userId: data.user.uid,
+            friends: [],
+            images: [],
+            bio: '',
+            location: '',
+            website: ''
         }
         await db.doc(`/users/${newUser.handle}`).set(userCredentials)
 
@@ -40,9 +43,9 @@ exports.signUp = async (req, res) => {
     } catch (e) {
 
         if (e.code === 'auth/email-already-in-use') {
-            return res.status(400).json({error: `email already in use`})
+            return res.status(400).json({error: `Email уже используется другим пользоваетелем`})
         }
-        return res.status(500).json({error: `something went wrong: ${e}`})
+        return res.status(500).json({error: `Что-то пошло не так: ${e}`})
     }
 }
 
@@ -53,10 +56,10 @@ exports.login = async (req, res) => {
             password: req.body.password
         }
 
-        const  { errors, isValid} = validateLogin(userInput)
+        const  error = validateLogin(userInput)
 
-        if (!isValid) {
-            return res.status(400).json({errors})
+        if (error) {
+            return res.status(400).json({error})
         }
 
         const data = await firebase.auth().signInWithEmailAndPassword(userInput.email, userInput.password)
@@ -64,8 +67,8 @@ exports.login = async (req, res) => {
         return res.json({token})
     } catch (e) {
         if (e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') {
-            return res.status(403).json({error: e.message})
+            return res.status(403).json({error: 'Неверный логин или пароль'})
         }
-        return res.status(500).json({error: `something went wrong: ${e}`})
+        return res.status(500).json({error: `Что-то пошло не так: ${e}`})
     }
 }
