@@ -28,7 +28,7 @@ exports.getAllBites = async (req, res) => {
 
         return res.json(bites)
     } catch (e) {
-        console.error(e)
+        res.status(500).json({ error: `something went wrong: ${e}` })
     }
 }
 
@@ -54,7 +54,7 @@ exports.getBite = async (req, res) => {
 
         return res.json(bite)
     } catch (e) {
-        res.status(500).json({error: `something went wrong: ${e}`})
+        res.status(500).json({ error: `something went wrong: ${e}` })
     }
 }
 
@@ -62,17 +62,17 @@ exports.deleteBite = async (req, res) => {
     try {
         const biteData = await db.doc(`/bites/${req.params.biteId}`).get()
         if (!biteData.exists) {
-            return res.status(404).json({ error: 'Bite not exist'})
+            return res.status(404).json({ error: 'Bite not exist' })
         }
 
         if (biteData.data().userHandle !== req.user.handle) {
-            return res.status(403).json({ error: 'Not authorized for this operation'})
+            return res.status(403).json({ error: 'Not authorized for this operation' })
         }
 
         await biteData.ref.delete()
         return res.status(200).json({ message: 'Bite was deleted successfully' })
     } catch (e) {
-        res.status(500).json({error: `something went wrong: ${e}`})
+        res.status(500).json({ error: `something went wrong: ${e}` })
     }
 
 }
@@ -91,7 +91,7 @@ exports.addBite = async (req, res) => {
         newBite.biteId = response.id
         res.status(201).json(newBite)
     } catch (e) {
-        res.status(500).json({error: `something went wrong: ${e}`})
+        res.status(500).json({ error: `something went wrong: ${e}` })
     }
 }
 
@@ -117,13 +117,13 @@ exports.commentBite = async (req, res) => {
         await db.collection('comments').add(comment)
         return res.json(comment)
     } catch (e) {
-        res.status(500).json({error: `something went wrong: ${e.code}`})
+        res.status(500).json({ error: `something went wrong: ${e.code}` })
     }
 }
 
 exports.likeBite = async (req, res) => {
     try {
-        const {biteDocument, bite, likeData} = await likeFlow(req, res)
+        const { biteDocument, bite, likeData } = await likeFlow(req, res)
 
         if (!likeData.empty) {
             return res.status(400).json({ error: 'Already liked by you' })
@@ -136,16 +136,16 @@ exports.likeBite = async (req, res) => {
             userHandle: req.user.handle
         }
         await db.collection('likes').add(like)
-        await biteDocument.update({ likesCount:  bite.likesCount})
+        await biteDocument.update({ likesCount: bite.likesCount })
         return res.status(201).json(bite)
     } catch (e) {
-        return res.status(500).json({error: `something went wrong: ${e}`})
+        return res.status(500).json({ error: `something went wrong: ${e}` })
     }
 }
 
 exports.unLikeBite = async (req, res) => {
     try {
-        const {biteDocument, bite, likeData} = await likeFlow(req, res)
+        const { biteDocument, bite, likeData } = await likeFlow(req, res)
 
         if (likeData.empty) {
             return res.status(400).json({ error: 'Not liked yet' })
@@ -154,10 +154,10 @@ exports.unLikeBite = async (req, res) => {
         bite.likesCount--
 
         await db.doc(`/likes/${likeData.docs[0].id}`).delete()
-        await biteDocument.update({ likesCount:  bite.likesCount})
+        await biteDocument.update({ likesCount: bite.likesCount })
         return res.status(200).json(bite)
     } catch (e) {
-        res.status(500).json({error: `something went wrong: ${e}`})
+        res.status(500).json({ error: `something went wrong: ${e}` })
     }
 }
 
@@ -176,5 +176,5 @@ const likeFlow = async (req, res) => {
         .where('userHandle', '==', req.user.handle)
         .get()
 
-    return {biteDocument, bite, likeData}
+    return { biteDocument, bite, likeData }
 }

@@ -1,6 +1,6 @@
 const { db, firebase } = require('../utils/admin')
 const { config } = require('../utils/config')
-const {validateSighUp, validateLogin} = require('../utils/validators')
+const { validateSighUp, validateLogin } = require('../utils/validators')
 
 exports.signUp = async (req, res) => {
     try {
@@ -11,15 +11,15 @@ exports.signUp = async (req, res) => {
             handle: req.body.handle,
         }
 
-        const  error = validateSighUp(newUser)
+        const error = validateSighUp(newUser)
 
         if (error) {
-            return res.status(400).json({error})
+            return res.status(400).json({ error })
         }
 
         const doc = await db.doc(`/users/${newUser.handle}`).get()
         if (doc.exists) {
-            return res.status(400).json({error: `Имя пользователя уже существует`})
+            return res.status(400).json({ error: `Имя пользователя уже существует` })
         }
 
         const data = await firebase.auth().createUserWithEmailAndPassword(newUser.email, newUser.password)
@@ -33,19 +33,19 @@ exports.signUp = async (req, res) => {
             images: [],
             bio: '',
             location: '',
-            website: ''
+            website: '',
         }
         await db.doc(`/users/${newUser.handle}`).set(userCredentials)
 
         const token = await data.user.getIdToken()
-        return res.status(201).json({token})
+        return res.status(201).json({ token })
 
     } catch (e) {
 
         if (e.code === 'auth/email-already-in-use') {
-            return res.status(400).json({error: `Email уже используется другим пользоваетелем`})
+            return res.status(400).json({ error: `Email уже используется другим пользоваетелем` })
         }
-        return res.status(500).json({error: `Что-то пошло не так: ${e}`})
+        return res.status(500).json({ error: `Что-то пошло не так: ${e}` })
     }
 }
 
@@ -56,19 +56,19 @@ exports.login = async (req, res) => {
             password: req.body.password
         }
 
-        const  error = validateLogin(userInput)
+        const error = validateLogin(userInput)
 
         if (error) {
-            return res.status(400).json({error})
+            return res.status(400).json({ error })
         }
 
         const data = await firebase.auth().signInWithEmailAndPassword(userInput.email, userInput.password)
         const token = await data.user.getIdToken()
-        return res.json({token})
+        return res.json({ token })
     } catch (e) {
         if (e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') {
-            return res.status(403).json({error: 'Неверный логин или пароль'})
+            return res.status(403).json({ error: 'Неверный логин или пароль' })
         }
-        return res.status(500).json({error: `Что-то пошло не так: ${e}`})
+        return res.status(500).json({ error: `Что-то пошло не так: ${e}` })
     }
 }

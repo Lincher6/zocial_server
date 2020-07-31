@@ -1,14 +1,14 @@
-const {db, admin} = require('../utils/admin')
-const {config} = require('../utils/config')
-const {reduceUserDetails} = require('../utils/validators')
+const { db, admin } = require('../utils/admin')
+const { config } = require('../utils/config')
+const { reduceUserDetails } = require('../utils/validators')
 
 exports.addUserDetails = async (req, res) => {
     try {
         const userDetails = reduceUserDetails(req.body)
         await db.doc(`/users/${req.user.handle}`).update(userDetails)
-        return res.json({message: 'Details were updated'})
+        return res.json({ message: 'Details were updated' })
     } catch (e) {
-        return res.status(500).json({error: e.message})
+        return res.status(500).json({ error: e.message })
     }
 }
 
@@ -63,7 +63,7 @@ exports.getUsers = async (req, res) => {
 
         return res.status(200).json(users)
     } catch (e) {
-        return res.status(500).json({error: e.message})
+        return res.status(500).json({ error: e.message })
     }
 }
 
@@ -111,7 +111,7 @@ exports.getAuthUserDetails = async (req, res) => {
 
         return res.json(userDetails)
     } catch (e) {
-        return res.status(500).json({error: e})
+        return res.status(500).json({ error: e })
     }
 }
 
@@ -119,7 +119,7 @@ exports.getUserDetails = async (req, res) => {
     try {
         const userData = await db.doc(`/users/${req.params.handle}`).get()
         if (!userData.exists) {
-            return res.status(404).json({error: 'User not found'})
+            return res.status(404).json({ error: 'User not found' })
         }
 
         const userDetails = userData.data()
@@ -135,7 +135,7 @@ exports.getUserDetails = async (req, res) => {
         return res.status(200).json(userDetails)
 
     } catch (e) {
-        return res.status(500).json({error: e})
+        return res.status(500).json({ error: e })
     }
 }
 
@@ -145,19 +145,19 @@ exports.uploadImage = async (req, res) => {
     const os = require('os')
     const fs = require('fs')
 
-    const busBoy = new BusBoy({headers: req.headers})
+    const busBoy = new BusBoy({ headers: req.headers })
     let imageFileName
     let imageToBeUploaded = {}
 
     busBoy.on('file', async (fieldName, file, fileName, encoding, mimeType) => {
         if (mimeType !== 'image/jpeg' && mimeType !== 'image/png') {
-            res.status(400).json({error: 'Not an image'})
+            res.status(400).json({ error: 'Not an image' })
         }
 
         const imageExtension = fileName.split('.')[fileName.split('.').length - 1]
         imageFileName = `${req.user.handle}${Math.round(Math.random() * 100000000)}.${imageExtension}`
         const imagePath = path.join(os.tmpdir(), imageFileName)
-        imageToBeUploaded = {imagePath, mimeType}
+        imageToBeUploaded = { imagePath, mimeType }
 
         file.pipe(fs.createWriteStream(imagePath))
 
@@ -176,14 +176,14 @@ exports.uploadImage = async (req, res) => {
 
             const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${config.storageBucket}/o/${imageFileName}?alt=media`
 
-            const newImage = { imageUrl, userHandle: req.user.handle, createdAt: new Date().toISOString()}
+            const newImage = { imageUrl, userHandle: req.user.handle, createdAt: new Date().toISOString() }
             await db.collection('images').add(newImage)
 
-            await db.doc(`/users/${req.user.handle}`).update({imageUrl})
-            return res.status(200).json({message: 'image uploaded successfully'})
+            await db.doc(`/users/${req.user.handle}`).update({ imageUrl })
+            return res.status(200).json({ message: 'image uploaded successfully' })
 
         } catch (e) {
-            return res.status(501).json({error: e})
+            return res.status(501).json({ error: e })
         }
 
     })
@@ -194,14 +194,14 @@ exports.uploadImage = async (req, res) => {
 exports.markReadNotifications = async (req, res) => {
     try {
         const batch = db.batch()
-        req.body.forEach( notificationId => {
+        req.body.forEach(notificationId => {
             const notification = db.doc(`/notifications/${notificationId}`)
             batch.update(notification, { read: true })
         })
         await batch.commit()
         return res.status(200).json({ message: 'Notifications marked' })
     } catch (e) {
-        return res.status(500).json({error: e})
+        return res.status(500).json({ error: e })
     }
 }
 
@@ -212,15 +212,15 @@ exports.follow = async (req, res) => {
         let newFriends
 
         if (req.body.follow) {
-            newFriends = [ ...friends,  req.params.handle]
+            newFriends = [...friends, req.params.handle]
         } else {
-            newFriends = friends.filter( friend => friend !== req.params.handle)
+            newFriends = friends.filter(friend => friend !== req.params.handle)
         }
 
-        await userData.ref.update({friends: newFriends})
-        return res.status(200).json({newFriends})
+        await userData.ref.update({ friends: newFriends })
+        return res.status(200).json({ newFriends })
     } catch (e) {
         console.log(e.message)
-        return res.status(500).json({error: e.message})
+        return res.status(500).json({ error: e.message })
     }
 }

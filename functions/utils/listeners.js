@@ -1,5 +1,5 @@
 const functions = require('firebase-functions');
-const {db} = require('./admin')
+const { db } = require('./admin')
 
 exports.generateNotification = (type) => {
     return functions
@@ -44,7 +44,7 @@ exports.onUserImageChange = functions
     .region('europe-west2')
     .firestore
     .document(`/users/{userId}`)
-    .onUpdate( async change => {
+    .onUpdate(async change => {
         try {
             if (change.before.data().imageUrl !== change.after.data().imageUrl) {
                 const batch = db.batch()
@@ -53,7 +53,7 @@ exports.onUserImageChange = functions
                     .collection('bites')
                     .where('userHandle', '==', change.after.data().handle)
                     .get()
-                bitesData.forEach( doc => {
+                bitesData.forEach(doc => {
                     const biteData = db.doc(`/bites/${doc.id}`)
                     batch.update(biteData, { imageUrl: change.after.data().imageUrl })
                 })
@@ -62,7 +62,7 @@ exports.onUserImageChange = functions
                     .collection('comments')
                     .where('userHandle', '==', change.after.data().handle)
                     .get()
-                commentsData.forEach( doc => {
+                commentsData.forEach(doc => {
                     const commentData = db.doc(`/comments/${doc.id}`)
                     batch.update(commentData, { userImage: change.after.data().imageUrl })
                 })
@@ -78,21 +78,21 @@ exports.onBiteDelete = functions
     .region('europe-west2')
     .firestore
     .document(`/bites/{biteId}`)
-    .onDelete( async (snapshot, context) => {
+    .onDelete(async (snapshot, context) => {
         try {
             const batch = db.batch()
             const biteId = context.params.biteId
             const commentsData = await db.collection('comments').where('biteId', '==', biteId).get()
-            commentsData.forEach( doc => {
-                batch.delete( db.doc(`/comments/${doc.id}`) )
+            commentsData.forEach(doc => {
+                batch.delete(db.doc(`/comments/${doc.id}`))
             })
             const likesData = await db.collection('likes').where('biteId', '==', biteId).get()
-            likesData.forEach( doc => {
-                batch.delete( db.doc(`/likes/${doc.id}`) )
+            likesData.forEach(doc => {
+                batch.delete(db.doc(`/likes/${doc.id}`))
             })
             const notificationsData = await db.collection('notifications').where('biteId', '==', biteId).get()
-            notificationsData.forEach( doc => {
-                batch.delete( db.doc(`/notifications/${doc.id}`) )
+            notificationsData.forEach(doc => {
+                batch.delete(db.doc(`/notifications/${doc.id}`))
             })
 
             return await batch.commit()
@@ -100,3 +100,13 @@ exports.onBiteDelete = functions
             console.log(e)
         }
     })
+
+exports.onUserOffline = functions.database.ref('/users/{uid}').onUpdate(
+    async (change, context) => {
+        const eventStatus = change.after.val();
+
+        // Then use other event data to create a reference to the
+        // corresponding Firestore document.
+        const userStatusFirestoreRef = db.doc(`onlineUsers/${context.params.uid}`);
+        return userStatusFirestoreRef.set(eventStatus);
+    });
